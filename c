@@ -20,7 +20,9 @@
 # This program use the default gcc compiler from your computer.
 # Please make sure that you have installed gcc compiler
 
-# Version 1.0
+# Version 1.1
+# Updated 23 JAN 2018
+# 1.1 - Add atomatic compile and link all C files in directory
 # Create by Chanchana Wicha 2018. All right reserved
 
 ################################################################################################
@@ -38,6 +40,24 @@ printError()
     echo -e "${RED}Error!${NC} $1"
 }
 
+printUsage()
+{
+    echo "Usage : "
+    echo "   c [Run type] [C Scorce file name]"
+    echo "   c        : Compile all C files and link them"
+    echo "   [Run type]"
+    echo "    Nothing     : Compile and run"
+    echo "    All Nothing : Compile all C files and link them"
+    echo "    -c      : Compile only"
+    echo "    -a      : Compile and run with arguments(type after -a)"
+    echo "    -in     : Compile and run with input file"
+    echo "    -ain    : Compile and run with arguments and input file"
+    echo "    -ro     : Remove all object file"
+    echo "   <Any argument> : Place this string after call the program"
+    echo "    --install   : Install this program"
+    echo "    --uninstall : Remove this program"
+}
+
 initialize()
 {
     path="${PATH%%:*}"
@@ -51,11 +71,91 @@ initialize()
     fi
 }
 
+compileAll()
+{
+
+    array=()
+    while IFS=  read -r -d $'\0'; do
+        array+=("$REPLY")
+    done < <(find *.c -print0)
+
+    mainFiles=()
+    linkFiles=()
+    compileErrorFiles=()
+
+    for x in ${array[*]}; do
+        echo $x
+        gcc -c $x
+        name="${x:0:${#x}-2}"
+        oname="$name.o"
+        if [ -f "$oname" ]
+        then
+            list=$(nm $oname)
+            if [[ "$list" =~ "_main" ]]
+            then
+                echo -e "${GREEN}$x has main function${NC}"
+                mainFiles+=($x)
+            else
+                linkFiles+=($x)
+            fi
+        else
+            compileErrorFiles+=($x)
+        fi
+        #echo 
+    done
+
+    exportFiles=()
+    errorFiles=()
+
+    for x in ${mainFiles[*]}; do
+        name="${x:0:${#x}-2}"
+        echo "$name"
+        if [ -f "$name" ]
+        then
+            rm $name
+        fi
+        gcc -o $name $x ${linkFiles[*]}
+        if [ -f "$name" ]
+        then
+            exportFiles+=($name)
+        else
+            errorFiles+=($name)
+        fi
+    done
+
+    echo "Compile finish!"
+    for x in ${exportFiles[*]}; do
+        echo -e "${GREEN}Exported to $x${NC}"
+    done
+
+    for x in ${errorFiles[*]}; do
+        printError "cannot export to ${RED}$x${NC}"
+    done
+
+    for x in ${compileErrorFiles[*]}; do
+        printError "compiling error with ${RED}$x${NC}"
+    done
+
+    rm *.o
+    #echo "${array[*]}"
+    #gcc -o a $files
+}
+
 ########## MAIN
 
 if [ "$1" = "--install" ]
 then
     initialize
+fi
+
+if [ $# -eq 0 ]
+then
+    if [ ! -f "${PATH%%:*}/c" ]
+    then
+        initialize
+    fi
+    compileAll
+    exit 999999
 fi
 
 source=$2
@@ -65,25 +165,9 @@ then
     source=$1
 fi
 
-if [ $# -eq 0 ]
+if [ "$1" = "-help" ]
 then
-
-    if [ ! -f "${PATH%%:*}/c" ]
-    then
-        initialize
-    fi
-    echo "Usage : "
-    echo "   c [Run type] [C Scorce file name]"
-    echo "   c --init : For initialize this program"
-    echo "   [Run type]"
-    echo "    Nothing : Compile and run"
-    echo "    -c      : Compile only"
-    echo "    -a      : Compile and run with arguments(type after -a)"
-    echo "    -in     : Compile and run with input file"
-    echo "    -ain    : Compile and run with arguments and input file"
-    echo "    -ro     : Remove all object file"
-    echo "    --install   : Install this program"
-    echo "    --uninstall : Remove this program"
+    printUsage
     exit 99
 fi
 
@@ -101,6 +185,14 @@ then
     echo "Uninstall successfully!"
     exit 999
 fi
+
+
+if [ "$1" = "." ]
+then
+    compileAll
+    exit 0
+fi
+
 
 if [ ! -f "$source" ]
 then
@@ -173,4 +265,18 @@ then
     else
         $export
     fi
+
+fi
+
+if [ ! -z $2 ]
+then
+    echo -e "${GREEN}Running $export${NC}"
+    echo " "
+    if [ -f "./$export" ]
+    then
+        ./$export ${@:2}
+    else
+        $export ${@:2}
+    fi
+    
 fi

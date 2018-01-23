@@ -1,8 +1,8 @@
 # modernC
 Compile C faster!
 
-More easy way to compile C Source file
-Use only "c <your source file's name>"
+More easy way to compile C Source file<br>
+Use only "c <your source file's name>"<br>
 Atomatically compile and run your program or use custom run mode
 
 # Installation

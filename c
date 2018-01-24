@@ -20,7 +20,9 @@
 # This program use the default gcc compiler from your computer.
 # Please make sure that you have installed gcc compiler
 
-# Version 1.1
+# Version 1.1.1
+# Updated 24 JAN 2018
+# Bug fixed
 # Updated 23 JAN 2018
 # 1.1 - Add atomatic compile and link all C files in directory
 # Create by Chanchana Wicha 2018. All right reserved
@@ -28,6 +30,8 @@
 ################################################################################################
 
 ########## VARIABLES
+
+VERSION="1.1.1"
 
 RED="\033[31m"
 GREEN="\033[0;32m"
@@ -53,6 +57,7 @@ printUsage()
     echo "    -in     : Compile and run with input file"
     echo "    -ain    : Compile and run with arguments and input file"
     echo "    -ro     : Remove all object file"
+    echo "    -v      : Version"
     echo "   <Any argument> : Place this string after call the program"
     echo "    --install   : Install this program"
     echo "    --uninstall : Remove this program"
@@ -62,6 +67,7 @@ initialize()
 {
     path="${PATH%%:*}"
     cp c $path
+    echo "$path"
     if [ -f "$path/c" ]
     then
         echo "Initialize successfully!"
@@ -91,7 +97,7 @@ compileAll()
         if [ -f "$oname" ]
         then
             list=$(nm $oname)
-            if [[ "$list" =~ "_main" ]]
+            if [[ "$list" =~ "main" ]]
             then
                 echo -e "${GREEN}$x has main function${NC}"
                 mainFiles+=($x)
@@ -142,6 +148,12 @@ compileAll()
 }
 
 ########## MAIN
+
+if [ "$1" = "-v" ]
+then
+    echo "modernC version $VERSION"
+    exit 99
+fi
 
 if [ "$1" = "--install" ]
 then

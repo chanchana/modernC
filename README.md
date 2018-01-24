@@ -11,6 +11,10 @@ git clone https://github.com/chanchana/modernC.git && cd modernC
 chmod +x c && ./c --install
 cd .. && rm -rf modernC
 ```
+If you cannot install by the second line, try this
+```shell
+sudo cp c ${PATH%%:*}
+```
 
 # How to use
 ```shell
